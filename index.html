@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merge Sort Visualizer</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/vue@3"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4c6d0; /* Cor de fundo rosa mais escuro */
+      display: flex;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .steps-container, .list-container {
+      display: flex;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+    .buttons {
+      margin-top: 20px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ddd;
+      cursor: not-allowed;
+    }
+    .step-description {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      color: #007bff;
+    }
+    .col-md-6 {
+      margin-top: 20px;
+    }
+    table {
+      background-color: #f8d7e5; /* Cor de fundo da tabela rosa claro */
+    }
+    th, td {
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <p>Passo Atual: {{ step + 1 }} de {{ steps.length }}</p>
+    <div class="steps-container">
+      <div class="col-md-6">
+        <h4>Lista Original</h4>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th scope="col">Princesa</th>
+              <th scope="col">Agressividade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="princesa in princesas" :key="princesa.nome">
+              <td>{{ princesa.nome }}</td>
+              <td>{{ princesa.agressividade }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col-md-6">
+        <h4>Passo Atual do Merge Sort</h4>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th scope="col">Princesa</th>
+              <th scope="col">Agressividade</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="princesa in currentStep" :key="princesa.nome">
+              <td>{{ princesa.nome }}</td>
+              <td>{{ princesa.agressividade }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div v-if="stepDescription" class="step-description">
+      <p>{{ stepDescription }}</p>
+    </div>
+
+    <div class="buttons">
+      <button class="btn btn-primary" @click="prevStep" :disabled="step === 0">Voltar</button>
+      <button class="btn btn-success" @click="nextStep" :disabled="step === steps.length - 1">Avançar</button>
+    </div>
+  </div>
+
+  <script>
+    const app = Vue.createApp({
+      data() {
+        return {
+          princesas: [
+            { nome: "Branca de Neve", agressividade: 1 },
+            { nome: "Cinderela", agressividade: 2 },
+            { nome: "Aurora", agressividade: 1 },
+            { nome: "Ariel", agressividade: 3 },
+            { nome: "Bela", agressividade: 2 },
+            { nome: "Jasmine", agressividade: 3 },
+            { nome: "Pocahontas", agressividade: 4 },
+            { nome: "Mulan", agressividade: 5 }
+          ],
+          steps: [],
+          step: 0,
+          stepDescription: ''
+        };
+      },
+      computed: {
+        currentStep() {
+          return this.steps[this.step];
+        }
+      },
+      methods: {
+        merge(array, esquerda, direita) {
+          let resultado = [];
+          let i = 0, j = 0;
+
+          while (i < esquerda.length && j < direita.length) {
+            if (esquerda[i].agressividade <= direita[j].agressividade) {
+              resultado.push(esquerda[i]);
+              i++;
+            } else {
+              resultado.push(direita[j]);
+              j++;
+            }
+          }
+
+          resultado = resultado.concat(esquerda.slice(i)).concat(direita.slice(j));
+
+          const estadoAtual = [...array];
+          for (let k = 0; k < resultado.length; k++) {
+            estadoAtual[k] = resultado[k];
+          }
+
+          this.steps.push([...estadoAtual]);
+
+          this.updateStepDescription(esquerda, direita);
+          return resultado;
+        },
+        mergeSort(array) {
+          if (array.length <= 1) return array;
+
+          const meio = Math.floor(array.length / 2);
+          const esquerda = this.mergeSort(array.slice(0, meio));
+          const direita = this.mergeSort(array.slice(meio));
+
+          return this.merge(array, esquerda, direita);
+        },
+        updateStepDescription(esquerda, direita) {
+          if (esquerda.length > 1 && direita.length > 1) {
+            this.stepDescription = 'Dividindo as listas em partes menores...';
+          } else if (esquerda.length === 1 && direita.length === 1) {
+            this.stepDescription = 'Mesclando duas sublistas ordenadas...';
+          } else {
+            this.stepDescription = 'Dividindo a lista em duas sublistas...';
+          }
+        },
+        runMergeSort() {
+          this.steps = [];
+          this.steps.push([...this.princesas]);
+          this.mergeSort([...this.princesas]);
+        },
+        nextStep() {
+          if (this.step < this.steps.length - 1) {
+            this.step++;
+          }
+        },
+        prevStep() {
+          if (this.step > 0) {
+            this.step--;
+          }
+        }
+      },
+      mounted() {
+        this.runMergeSort();
+      }
+    });
+
+    app.mount("#app");
+  </script>
+</body>
+</html>
